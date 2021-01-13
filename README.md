@@ -1,5 +1,3 @@
-# ACF Menu Picker Field
+# ACF Menu Picker
 
-Welcome to the Advanced Custom Fields Menu Picker repository on Github.
-
-EXTENDED_DESCRIPTION
+A very simple menu picker for ACF. 
