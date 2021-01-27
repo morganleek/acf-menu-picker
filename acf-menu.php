@@ -79,6 +79,7 @@ class scm_acf_plugin_menu_picker {
 		
 		// include
 		include_once('fields/class-scm-acf-field-menu-picker-v' . $version . '.php');
+		include_once('fields/class-scm-acf-field-menu-item-picker-v' . $version . '.php');
 	}
 	
 }
@@ -87,8 +88,5 @@ class scm_acf_plugin_menu_picker {
 // initialize
 new scm_acf_plugin_menu_picker();
 
-
-// class_exists check
 endif;
-	
 ?>

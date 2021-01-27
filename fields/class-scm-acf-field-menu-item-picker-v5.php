@@ -5,10 +5,10 @@ if( ! defined( 'ABSPATH' ) ) exit;
 
 
 // check if class already exists
-if( !class_exists('scm_acf_field_menu_picker') ) :
+if( !class_exists('scm_acf_field_menu_item_picker') ) :
 
 
-class scm_acf_field_menu_picker extends acf_field {
+class scm_acf_field_menu_item_picker extends acf_field {
 	
 	
 	/*
@@ -30,14 +30,14 @@ class scm_acf_field_menu_picker extends acf_field {
 		*  name (string) Single word, no spaces. Underscores allowed
 		*/
 		
-		$this->name = 'menu_picker';
+		$this->name = 'menu_item_picker';
 		
 		
 		/*
 		*  label (string) Multiple words, can include spaces, visible when selecting a field type
 		*/
 		
-		$this->label = __('Menu Picker', 'acf-menu-picker');
+		$this->label = __('Menu Item Picker', 'acf-menu-picker');
 		
 		
 		/*
@@ -104,13 +104,13 @@ class scm_acf_field_menu_picker extends acf_field {
 		*  Please note that you must also have a matching $defaults value for the field name (font_size)
 		*/
 		
-		// acf_render_field_setting( $field, array(
-		// 	'label'			=> __('Menu','acf-menu-picker'),
-		// 	'instructions'	=> __('Choose WP menu','acf-menu-picker'),
-		// 	'type'			=> 'number',
-		// 	'name'			=> 'menu_id',
-		// 	'prepend'		=> '',
-		// ));
+		acf_render_field_setting( $field, array(
+			'label'			=> __('Menus','acf-menu-picker'),
+			'instructions'	=> __('Choose WP menu','acf-menu-picker'),
+			'type'			=> 'select',
+			'name'			=> 'menu_id',
+			'choices'   => 	acf_get_menus_array()
+		));
 
 	}
 	
@@ -139,23 +139,33 @@ class scm_acf_field_menu_picker extends acf_field {
 		*  This will show what data is available
 		*/
 		$field_value = $field['value'];
-							
+		
 
-		$field['choices'] = array();
-		$menus = wp_get_nav_menus();
-							
-		echo '<select name="' . $field['name'] . '" class="acf-menu-picker">';
 
-				if ( ! empty( $menus ) ) {
-					echo '<option  value="" ' . selected($field_value, "", false) . ' >Pick a menu</option>' ;
-					foreach ( $menus as $choice ) {
-						$field['choices'][ $choice->menu_id ] = $choice->term_id;
-						$field['choices'][ $choice->name ] = $choice->name;
+		// print $field['menu_id'];
+		if( !empty( $field['menu_id'] ) ) {
+			$nav = wp_get_nav_menu_items( $field['menu_id'] );
 
-						echo '<option  value="' . $field['choices'][ $choice->menu_id ] . '" ' . selected($field_value, $field['choices'][ $choice->menu_id ], false) . ' >' . $field['choices'][ $choice->name ] . '</option>' ;
+			$depth = [];
+			$field['choices'] = array();
+			echo '<select name="' . $field['name'] . '" class="acf-menu-picker">';
+				if ( ! empty( $nav ) ) {
+					echo '<option  value="" ' . selected($field_value, "", false) . ' >Pick a menu item</option>' ;
+					foreach ( $nav as $item ) {
+						$depth[ $item->ID ] = ( $item->menu_item_parent == 0 ) ? 0 : $depth[ $item->menu_item_parent ] + 1;
+						$field['choices']['id'] = $item->ID;
+						$depth_line = str_repeat( '&mdash;', intval( $depth[ $item->ID ] ) );
+						$depth_space = ( $depth[ $item->ID ] > 0 ) ? '&nbsp;' : '';
+						$field['choices']['name'] = $depth_line . $depth_space . $item->title;
+
+						echo '<option value="' . $field['choices']['id'] . '" ' . selected($field_value, $field['choices']['id'], false) . ' >' . $field['choices']['name'] . '</option>' ;
 					}
 				}
-		echo '</select>';
+			echo '</select>';
+		}
+		else {
+			print 'No menu selected';
+		}
 
 	}
 	
@@ -389,8 +399,6 @@ class scm_acf_field_menu_picker extends acf_field {
 	*  @return	$value (mixed) the modified value
 	*/
 		
-	/*
-	
 	function format_value( $value, $post_id, $field ) {
 		
 		// bail early if no value
@@ -400,21 +408,12 @@ class scm_acf_field_menu_picker extends acf_field {
 			
 		}
 		
-		
-		// apply setting
-		if( $field['font_size'] > 12 ) { 
-			
-			// format the value
-			// $value = 'something';
-		
-		}
-		
-		
-		// return
-		return $value;
+		return array(
+			'menu_id' => $field['menu_id'],
+			'menu_item' => $value
+		);
 	}
 	
-	*/
 	
 	
 	/*
@@ -563,10 +562,25 @@ class scm_acf_field_menu_picker extends acf_field {
 
 
 // initialize
-new scm_acf_field_menu_picker( $this->settings );
+new scm_acf_field_menu_item_picker( $this->settings );
 
 
 // class_exists check
 endif;
+
+if( !function_exists( 'acf_get_menus_array' ) ) {
+	function acf_get_menus_array() {
+		$menu_array = [];
+		
+		$menus = wp_get_nav_menus();
+		if ( ! empty( $menus ) ) {
+			foreach( $menus as $m ) {
+				$menu_array[$m->slug] = $m->name;
+			}
+		}
+
+		return $menu_array;
+	}
+}
 
 ?>
